@@ -1,11 +1,9 @@
 
 ###> symfony/framework-bundle ###
-/.env.local
-/.env.test
-/.env.dev
-/.env.
-/.env.local.php
-/.env.*.local
+# Ignorer tous les fichiers d'environnement
+/.env*
+# Mais inclure le fichier d'exemple s'il existe
+!/.env.example
 /config/secrets/prod/prod.decrypt.private.php
 /public/bundles/
 /var/
