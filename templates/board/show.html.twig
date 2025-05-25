@@ -1,0 +1,325 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ board.name }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        body {
+            overflow-x: auto;
+            min-height: 100vh;
+            background-color: var(--primary-color);
+        }
+
+        .board-container {
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        
+        .board-wrapper {
+            display: flex;
+            padding: 0.5rem;
+            min-height: calc(100vh - 170px);
+        }
+        
+        .board-header {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .board-lists-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .navbar, .footer {
+            background-color: var(--secondary-color) !important;
+        }
+        
+        .list-form, .card-form {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+            padding: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialisation du tri des listes
+            const boardListsContainer = document.querySelector('.board-lists-container');
+            if (boardListsContainer) {
+                new Sortable(boardListsContainer, {
+                    animation: 150,
+                    draggable: '.board-list',
+                    handle: '.board-list-header',
+                    ghostClass: 'dragging',
+                    onEnd: function(evt) {
+                        // À implémenter: mise à jour des positions des listes
+                        const lists = document.querySelectorAll('.board-list');
+                        const positions = {};
+                        
+                        lists.forEach((list, index) => {
+                            positions[list.dataset.listId] = index + 1;
+                        });
+                        
+                        // Envoi des nouvelles positions au serveur
+                        const formData = new FormData();
+                        for (const id in positions) {
+                            formData.append('positions[' + id + ']', positions[id]);
+                        }
+                        
+                        fetch('{{ path('app_boardlist_update_positions', {'id': board.lists.first ? board.lists.first.id : 0}) }}', {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+                });
+            }
+
+            // Initialisation du tri des cartes dans chaque liste
+            const cardContainers = document.querySelectorAll('.board-list-content');
+            cardContainers.forEach(container => {
+                new Sortable(container, {
+                    animation: 150,
+                    group: 'cards',
+                    draggable: '.card',
+                    ghostClass: 'dragging',
+                    onEnd: function(evt) {
+                        // À implémenter: mise à jour de la position de la carte
+                        const card = evt.item;
+                        const listId = card.closest('.board-list').dataset.listId;
+                        const position = Array.from(card.parentNode.children).indexOf(card) + 1;
+                        
+                        // Envoi des nouvelles coordonnées au serveur
+                        const formData = new FormData();
+                        formData.append('listId', listId);
+                        formData.append('position', position);
+                        
+                        fetch('{{ path('app_card_move', {'id': 0}) }}'.replace('0', card.dataset.cardId), {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }
+                });
+            });
+            
+            // Gestion de l'édition du nom d'une liste
+            document.querySelectorAll('.edit-list-name').forEach(element => {
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const listHeader = this.closest('.board-list-header');
+                    const listTitle = listHeader.querySelector('.list-title');
+                    const listForm = listHeader.querySelector('.list-name-form');
+                    
+                    listTitle.style.display = 'none';
+                    listForm.style.display = 'block';
+                    listForm.querySelector('input').focus();
+                });
+            });
+            
+            // Gestion de l'annulation de l'édition du nom d'une liste
+            document.querySelectorAll('.cancel-edit-list').forEach(element => {
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const listForm = this.closest('.list-name-form');
+                    const listTitle = listForm.previousElementSibling;
+                    
+                    listForm.style.display = 'none';
+                    listTitle.style.display = 'block';
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="board-container">
+        <!-- Board Header -->
+        <div class="board-header text-white">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h3">{{ board.name }}</h1>
+                    {% if board.description %}
+                        <p class="mb-0">{{ board.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <a href="{{ path('app_board_edit', {'id': board.id}) }}" class="btn btn-sm btn-light">
+                            <i class="fas fa-edit me-1"></i> Modifier
+                        </a>
+                        <button type="button" class="btn btn-sm btn-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="visually-hidden">Menu</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                    <i class="fas fa-trash me-1 text-danger"></i> Supprimer ce tableau
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Board Lists -->
+        <div class="board-wrapper">
+            <div class="board-lists-container">
+                {% for list in board.lists %}
+                    <div class="board-list" data-list-id="{{ list.id }}">
+                        <div class="board-list-header">
+                            <div class="d-flex justify-content-between align-items-center list-title">
+                                <h3 class="h6 mb-0">{{ list.name }}</h3>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-link text-dark p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item edit-list-name" href="#">
+                                                <i class="fas fa-edit me-1"></i> Renommer
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteListModal{{ list.id }}">
+                                                <i class="fas fa-trash me-1"></i> Supprimer
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <form class="list-name-form mt-1" action="{{ path('app_boardlist_edit_name', {'id': list.id}) }}" method="post" style="display: none;">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" name="name" class="form-control" value="{{ list.name }}" required>
+                                    <button class="btn btn-outline-success" type="submit">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="btn btn-outline-secondary cancel-edit-list" type="button">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="board-list-content">
+                            {% for card in list.cards %}
+                                <div class="card" data-card-id="{{ card.id }}">
+                                    {% if card.labels.count > 0 %}
+                                        <div class="card-labels">
+                                            {% for label in card.labels %}
+                                                <div class="card-label" style="background-color: {{ label.color }}" title="{{ label.name }}"></div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <div class="card-body p-2">
+                                        <a href="{{ path('app_card_show', {'id': card.id}) }}" class="text-decoration-none text-dark">
+                                            <h5 class="card-title h6 mb-1">{{ card.title }}</h5>
+                                        </a>
+                                        {% if card.dueDate %}
+                                            <div class="due-date {% if card.completed %}completed{% elseif card.dueDate < date() %}overdue{% endif %}">
+                                                <i class="far fa-clock me-1"></i>
+                                                {{ card.dueDate|date('d/m/Y') }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-2">
+                            <a href="#" class="add-card d-flex align-items-center text-decoration-none" data-bs-toggle="collapse" data-bs-target="#collapseCardForm{{ list.id }}" aria-expanded="false">
+                                <i class="fas fa-plus me-2"></i> Ajouter une carte
+                            </a>
+                            <div class="collapse" id="collapseCardForm{{ list.id }}">
+                                <div class="card-form mt-2">
+                                    <form action="{{ path('app_boardlist_add_card', {'id': list.id}) }}" method="post">
+                                        <div class="mb-2">
+                                            <input type="text" name="title" class="form-control form-control-sm" placeholder="Titre de la carte" required>
+                                        </div>
+                                        <div class="d-flex">
+                                            <button type="submit" class="btn btn-sm btn-success me-2">Ajouter</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#collapseCardForm{{ list.id }}">
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal de suppression de la liste -->
+                        <div class="modal fade" id="deleteListModal{{ list.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Confirmer la suppression</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer la liste "{{ list.name }}" ?</p>
+                                        <p class="text-danger">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            Cette action est irréversible et supprimera également toutes les cartes de cette liste.
+                                        </p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <form method="post" action="{{ path('app_boardlist_delete', {'id': list.id}) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ list.id) }}">
+                                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- Add List Form -->
+                <div class="board-list bg-transparent" style="width: 272px;">
+                    <div class="list-form">
+                        <form action="{{ path('app_board_add_list', {'id': board.id}) }}" method="post">
+                            <div class="mb-2">
+                                <input type="text" name="name" class="form-control" placeholder="Titre de la liste" required>
+                            </div>
+                            <button type="submit" class="btn btn-success">Ajouter une liste</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de suppression du tableau -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer le tableau "{{ board.name }}" ?</p>
+                    <p class="text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Cette action est irréversible et supprimera également toutes les listes et cartes associées.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <form method="post" action="{{ path('app_board_delete', {'id': board.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ board.id) }}">
+                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

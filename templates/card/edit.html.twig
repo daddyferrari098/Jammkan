@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier la carte - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('app_board_index') }}">Mes tableaux</a></li>
+                    <li class="breadcrumb-item"><a href="{{ path('app_board_show', {'id': board.id}) }}">{{ board.name }}</a></li>
+                    <li class="breadcrumb-item"><a href="{{ path('app_card_show', {'id': card.id}) }}">{{ card.title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Modifier</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="h3 mb-0">Modifier la carte</h1>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                        <div class="mb-3">
+                            {{ form_label(form.title) }}
+                            {{ form_widget(form.title) }}
+                            {{ form_errors(form.title) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.boardList) }}
+                            {{ form_widget(form.boardList) }}
+                            {{ form_errors(form.boardList) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.description) }}
+                            {{ form_widget(form.description) }}
+                            {{ form_errors(form.description) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.dueDate) }}
+                            {{ form_widget(form.dueDate) }}
+                            {{ form_errors(form.dueDate) }}
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            {{ form_widget(form.completed) }}
+                            {{ form_label(form.completed) }}
+                            {{ form_errors(form.completed) }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">{{ form_label(form.labels) }}</label>
+                            <div class="labels-container">
+                                {% for label in form.labels %}
+                                    <div class="form-check mb-2">
+                                        {{ form_widget(label) }}
+                                        <label class="form-check-label" for="{{ label.vars.id }}">
+                                            <span class="badge" style="background-color: {{ label.vars.label }}">{{ label.vars.value }}</span>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-save me-1"></i> Enregistrer les modifications
+                            </button>
+                            <a href="{{ path('app_card_show', {'id': card.id}) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Retour à la carte
+                            </a>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

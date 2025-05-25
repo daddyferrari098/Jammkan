@@ -1,0 +1,75 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Tableau de bord</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('app_board_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Créer un tableau
+            </a>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Mes tableaux</h2>
+                </div>
+                <div class="card-body">
+                    {% if boards is empty %}
+                        <p class="text-muted">Vous n'avez pas encore créé de tableau.</p>
+                        <a href="{{ path('app_board_new') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i> Créer mon premier tableau
+                        </a>
+                    {% else %}
+                        <div class="list-group">
+                            {% for board in boards %}
+                                <a href="{{ path('app_board_show', {'id': board.id}) }}" class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ board.name }}</h5>
+                                        <small>{{ board.createdAt|date('d/m/Y') }}</small>
+                                    </div>
+                                    {% if board.description %}
+                                        <p class="mb-1">{{ board.description|u.truncate(100, '...') }}</p>
+                                    {% endif %}
+                                    <small>{{ board.lists|length }} liste(s)</small>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Activités récentes</h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">L'historique des activités sera bientôt disponible.</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">Accès rapide</h2>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_board_new') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus me-1"></i> Nouveau tableau
+                        </a>
+                        <a href="{{ path('app_board_index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-table-list me-1"></i> Voir tous les tableaux
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bienvenue - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="py-5 text-center">
+        <h1 class="display-4 mb-4">Bienvenue sur Jammkan</h1>
+        <p class="lead mb-4">Organisez vos projets, gérez vos tâches et collaborez efficacement.</p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg px-4 gap-3">S'inscrire</a>
+            <a href="{{ path('app_login') }}" class="btn btn-outline-secondary btn-lg px-4">Se connecter</a>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-list-check fa-3x mb-3 text-primary"></i>
+                    <h3>Organisez vos tâches</h3>
+                    <p>Créez des tableaux, des listes et des cartes pour organiser vos projets de manière visuelle.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-tags fa-3x mb-3 text-primary"></i>
+                    <h3>Étiquettes colorées</h3>
+                    <p>Utilisez des étiquettes colorées pour catégoriser vos tâches et les retrouver facilement.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-calendar-days fa-3x mb-3 text-primary"></i>
+                    <h3>Dates d'échéance</h3>
+                    <p>Ajoutez des dates d'échéance à vos cartes pour ne jamais manquer une deadline.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

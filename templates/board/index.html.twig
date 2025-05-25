@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes tableaux - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <h1>Mes tableaux</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{{ path('app_board_new') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> Créer un tableau
+            </a>
+        </div>
+    </div>
+
+    {% if boards is empty %}
+        <div class="alert alert-info">
+            <p>Vous n'avez pas encore créé de tableau.</p>
+            <a href="{{ path('app_board_new') }}" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-1"></i> Créer mon premier tableau
+            </a>
+        </div>
+    {% else %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
+            {% for board in boards %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ board.name }}</h5>
+                            {% if board.description %}
+                                <p class="card-text">{{ board.description|u.truncate(100, '...') }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer d-flex justify-content-between">
+                            <small class="text-muted">{{ board.createdAt|date('d/m/Y') }}</small>
+                            <div>
+                                <a href="{{ path('app_board_show', {'id': board.id}) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('app_board_edit', {'id': board.id}) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ board.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal de suppression -->
+                <div class="modal fade" id="deleteModal{{ board.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ board.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel{{ board.id }}">Confirmer la suppression</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                Êtes-vous sûr de vouloir supprimer le tableau "{{ board.name }}" ?
+                                <p class="text-danger mt-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Cette action est irréversible et supprimera également toutes les listes et cartes associées.
+                                </p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                <form method="post" action="{{ path('app_board_delete', {'id': board.id}) }}" class="d-inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ board.id) }}">
+                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

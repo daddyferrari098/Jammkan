@@ -1,0 +1,144 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ card.title }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('app_board_index') }}">Mes tableaux</a></li>
+                    <li class="breadcrumb-item"><a href="{{ path('app_board_show', {'id': card.boardList.board.id}) }}">{{ card.boardList.board.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ card.title }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">{{ card.title }}</h1>
+                    <div class="btn-group">
+                        <a href="{{ path('app_card_edit', {'id': card.id}) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> Modifier
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteCardModal">
+                            <i class="fas fa-trash me-1"></i> Supprimer
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if card.labels.count > 0 %}
+                        <div class="mb-3">
+                            <strong>Étiquettes:</strong>
+                            <div class="mt-2">
+                                {% for label in card.labels %}
+                                    <span class="badge me-1" style="background-color: {{ label.color }}">{{ label.name }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <strong>Liste:</strong> {{ card.boardList.name }}
+                    </div>
+
+                    {% if card.dueDate %}
+                        <div class="mb-3">
+                            <strong>Date d'échéance:</strong>
+                            <span class="{% if card.completed %}text-success{% elseif card.dueDate < date() %}text-danger{% endif %}">
+                                {{ card.dueDate|date('d/m/Y H:i') }}
+                                {% if card.completed %}
+                                    <i class="fas fa-check-circle ms-1"></i> Terminée
+                                {% elseif card.dueDate < date() %}
+                                    <i class="fas fa-exclamation-circle ms-1"></i> En retard
+                                {% endif %}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <form method="post" action="{{ path('app_card_toggle_completed', {'id': card.id}) }}">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="completedCheck" {% if card.completed %}checked{% endif %} onchange="this.form.submit()">
+                                <label class="form-check-label" for="completedCheck">
+                                    Marquer comme terminée
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+
+                    <h5>Description</h5>
+                    {% if card.description %}
+                        <div class="card-text">
+                            {{ card.description|nl2br }}
+                        </div>
+                    {% else %}
+                        <p class="text-muted"><em>Aucune description</em></p>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            Créée le {{ card.createdAt|date('d/m/Y') }}
+                        </div>
+                        {% if card.updatedAt %}
+                            <div>
+                                Mise à jour le {{ card.updatedAt|date('d/m/Y H:i') }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ path('app_card_edit', {'id': card.id}) }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <i class="fas fa-edit me-3"></i> Modifier la carte
+                        </a>
+                        <button type="button" class="list-group-item list-group-item-action d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deleteCardModal">
+                            <i class="fas fa-trash me-3"></i> Supprimer la carte
+                        </button>
+                        <a href="{{ path('app_board_show', {'id': card.boardList.board.id}) }}" class="list-group-item list-group-item-action d-flex align-items-center">
+                            <i class="fas fa-arrow-left me-3"></i> Retour au tableau
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de suppression de la carte -->
+    <div class="modal fade" id="deleteCardModal" tabindex="-1" aria-labelledby="deleteCardModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteCardModalLabel">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Êtes-vous sûr de vouloir supprimer la carte "{{ card.title }}" ?</p>
+                    <p class="text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Cette action est irréversible.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <form method="post" action="{{ path('app_card_delete', {'id': card.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ card.id) }}">
+                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle étiquette - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('app_board_index') }}">Mes tableaux</a></li>
+                    <li class="breadcrumb-item"><a href="{{ path('app_board_show', {'id': board.id}) }}">{{ board.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Nouvelle étiquette</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="h3 mb-0">Créer une nouvelle étiquette</h1>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                        <div class="mb-3">
+                            {{ form_label(form.name) }}
+                            {{ form_widget(form.name) }}
+                            {{ form_errors(form.name) }}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">{{ form_label(form.color) }}</label>
+                            <div class="color-picker-container d-flex flex-wrap">
+                                {% for choice in form.color.vars.choices %}
+                                    <div class="form-check me-3 mb-2">
+                                        <input 
+                                            type="radio" 
+                                            id="{{ form.color.vars.id }}_{{ loop.index0 }}" 
+                                            name="{{ form.color.vars.full_name }}" 
+                                            value="{{ choice.value }}" 
+                                            class="form-check-input"
+                                            {% if choice.value == form.color.vars.value %}checked{% endif %}
+                                        >
+                                        <label class="form-check-label" for="{{ form.color.vars.id }}_{{ loop.index0 }}">
+                                            <div style="width: 30px; height: 30px; background-color: {{ choice.value }}; border-radius: 4px;"></div>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {{ form_errors(form.color) }}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-save me-1"></i> Créer l'étiquette
+                            </button>
+                            <a href="{{ path('app_board_show', {'id': board.id}) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Retour au tableau
+                            </a>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .color-picker-container .form-check-input:checked + label div {
+            box-shadow: 0 0 0 2px #000, 0 0 0 4px #fff;
+        }
+    </style>
+{% endblock %}
